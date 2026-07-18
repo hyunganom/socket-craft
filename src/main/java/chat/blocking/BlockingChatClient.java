@@ -26,33 +26,50 @@ public class BlockingChatClient  {
 
         Scanner sc = new Scanner(System.in);
 
-        Thread receiverThread = new Thread(()->{
+        System.out.print("닉네임 입력: ");
+        String nickname = sc.nextLine();
+
+        writer.println(nickname);
+
+
+        /*
+         * 서버 메시지를 계속 받는 수신 전용 스레드
+         */
+        Thread receiverThread = new Thread(() -> {
             try {
-                while (true){
+                while (true) {
                     String receivedMessage = reader.readLine();
 
-                    if(receivedMessage == null){
+                    if (receivedMessage == null) {
+                        System.out.println();
+                        System.out.println("서버와의 연결이 종료되었습니다.");
                         break;
                     }
 
+                    System.out.println();
                     System.out.println("채팅 메시지 : " + receivedMessage);
                 }
             } catch (IOException e) {
-                throw new RuntimeException(e);
+                if (!socket.isClosed()) {
+                    System.out.println();
+                    System.out.println("서버와의 통신이 끊어졌습니다.");
+                }
             }
         });
 
         receiverThread.start();
 
+
         while (true) {
-            System.out.print("메시지 입력: ");
+            System.out.println("메시지 입력: ");
             String typingMessage = sc.nextLine();
+
+            writer.println(typingMessage);
 
             if (typingMessage.equals("/quit")) {
                 break;
             }
 
-            writer.println(typingMessage);
         }
 
         socket.close();

@@ -14,6 +14,8 @@ public class ClientHandler implements Runnable{
     private final List<ClientHandler> clients;
     private PrintWriter writer;
 
+    private String nickname;
+
     public ClientHandler(Socket socket, List<ClientHandler> list){ // 서버가 전달한 socket을 객체 필드에 저장
         this.clients = list;
         this.socket =socket;
@@ -50,7 +52,14 @@ public class ClientHandler implements Runnable{
             * PrintWriter -> 문자열을 전송
             * */
 
+            //클라이언트가 처음보낸 한줄은 닉네임
+            nickname = reader.readLine();
+
+            if(nickname == null) return;
+
             clients.add(this);
+            broadcast(nickname + " 입장");
+
             while (true){
                 String message = reader.readLine();
 
@@ -62,15 +71,22 @@ public class ClientHandler implements Runnable{
                     break;
                 }
 
+                if (message.equals("/quit")) {
+                    break;
+                }
+
+
                 System.out.println("메시지 내용 : " + message);
-                broadcast(message);
+                broadcast(nickname + " : " + message);
 
 
             }
         } catch (Exception e) {
             throw new RuntimeException(e);
         } finally {
-            clients.remove(this);
+            if(clients.remove(this)){
+                broadcast(nickname + " 퇴장");
+            };
             try {
                 socket.close();
             } catch (IOException e) {
