@@ -1,6 +1,5 @@
 package chat.blocking;
 
-import javax.imageio.IIOException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -9,7 +8,7 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.Scanner;
 
-public class BlockingClientHandler {
+public class BlockingChatClient  {
     private static final int PORT = 9000;
     private static final String HOST = "localhost";
 
@@ -26,14 +25,37 @@ public class BlockingClientHandler {
                 StandardCharsets.UTF_8);
 
         Scanner sc = new Scanner(System.in);
-        String typingMessage = sc.nextLine();
-        writer.println(typingMessage);
 
-        String response = reader.readLine();
+        Thread receiverThread = new Thread(()->{
+            try {
+                while (true){
+                    String receivedMessage = reader.readLine();
 
-        System.out.println("서버 응답 : " + response);
+                    if(receivedMessage == null){
+                        break;
+                    }
+
+                    System.out.println("채팅 메시지 : " + receivedMessage);
+                }
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        receiverThread.start();
+
+        while (true) {
+            System.out.print("메시지 입력: ");
+            String typingMessage = sc.nextLine();
+
+            if (typingMessage.equals("/quit")) {
+                break;
+            }
+
+            writer.println(typingMessage);
+        }
 
         socket.close();
+        sc.close();
     }
-
 }
